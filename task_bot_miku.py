@@ -426,7 +426,7 @@ class ReminderBot:
             
             # Check if group already exists
             if group_id in groups_data['groups']:
-                already_exists.append(f"{self.escape_markdown(groups_data['groups'][group_id])} ({self.escape_markdown(group_id)})")
+                already_exists.append(f"{groups_data['groups'][group_id]} ({group_id})")
                 continue
             
             # Try to fetch group name from Telegram
@@ -434,19 +434,17 @@ class ReminderBot:
                 chat = await context.bot.get_chat(chat_id=group_id)
                 group_name = chat.title
                 groups_data['groups'][group_id] = group_name
-                # Store unescaped for later display, escape for Markdown
-                added.append(f"{self.escape_markdown(group_name)} ({self.escape_markdown(group_id)})")
+                added.append(f"{group_name} ({group_id})")
             except Exception as e:
-                failed.append(f"{self.escape_markdown(group_id)} (can't access group - make sure bot is added)")
+                failed.append(f"{group_id} (can't access group - make sure bot is added)")
                 logger.error(f"Failed to get chat {group_id}: {e}")
         
         response = ""
         if added:
             self.save_json(GROUPS_FILE, groups_data)
             
-            # Log action (no escaping needed for log)
+            # Log action
             username = update.effective_user.username or update.effective_user.first_name or "Unknown"
-            # Create unescaped version for logging
             added_for_log = []
             for line in lines:
                 group_id = line.strip()
@@ -459,23 +457,23 @@ class ReminderBot:
                 f"Added {len(added)} group(s): {', '.join(added_for_log)}"
             )
             
-            response += f"✅ **Added {len(added)} group(s):**\n" + "\n".join([f"• {g}" for g in added]) + "\n\n"
+            response += f"✅ <b>Added {len(added)} group(s):</b>\n" + "\n".join([f"• {g}" for g in added]) + "\n\n"
         
         if already_exists:
-                        response += f"⚠️ **Already registered:**\n" + "\n".join([f"• {g}" for g in already_exists]) + "\n\n"
+            response += f"⚠️ <b>Already registered:</b>\n" + "\n".join([f"• {g}" for g in already_exists]) + "\n\n"
         
         if invalid:
-            response += f"❌ **Invalid group IDs:**\n" + "\n".join([f"• {inv}" for inv in invalid]) + "\n\n"
+            response += f"❌ <b>Invalid group IDs:</b>\n" + "\n".join([f"• {inv}" for inv in invalid]) + "\n\n"
         
         if failed:
-            response += f"⚠️ **Failed to access:**\n" + "\n".join([f"• {f}" for f in failed]) + "\n\n"
+            response += f"⚠️ <b>Failed to access:</b>\n" + "\n".join([f"• {f}" for f in failed]) + "\n\n"
         
         if not added and not already_exists and not invalid and not failed:
-            response = "❌ Invalid format. Send group ID: `-1001234567891`\n\n"
+            response = "❌ Invalid format. Send group ID: <code>-1001234567891</code>\n\n"
         
         response += "Send more group IDs or /done to finish."
         
-        await update.message.reply_text(response, parse_mode='Markdown')
+        await update.message.reply_text(response, parse_mode='HTML')
         
         return WAITING_FOR_ADD_GROUPS
     
@@ -588,13 +586,13 @@ class ReminderBot:
             await update.message.reply_text("📭 No groups registered yet.\n\nUse /add_group to add groups.")
             return
         
-        message = "👥 **Registered Groups:**\n\n"
+        message = "👥 <b>Registered Groups:</b>\n\n"
         for idx, (group_id, group_name) in enumerate(groups.items(), 1):
-            message += f"{idx}. **{self.escape_markdown(group_name)}**: {self.escape_markdown(group_id)}\n\n"
+            message += f"{idx}. <b>{group_name}</b>: <code>{group_id}</code>\n\n"
         
-        message += f"**Total:** {len(groups)} group(s)"
+        message += f"<b>Total:</b> {len(groups)} group(s)"
         
-        await update.message.reply_text(message, parse_mode='Markdown')
+        await update.message.reply_text(message, parse_mode='HTML')
     
     async def add_task_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Start add task conversation"""
@@ -2441,10 +2439,10 @@ The reminder will be sent automatically at the scheduled time.
         """Finish add groups session"""
         await self.clear_conversation(update.effective_user.id)
         groups_data = self.load_json(GROUPS_FILE)
-        group_list = "\n".join([f"• {self.escape_markdown(name)}: {self.escape_markdown(gid)}" for gid, name in groups_data.get('groups', {}).items()])
+        group_list = "\n".join([f"• {name}: <code>{gid}</code>" for gid, name in groups_data.get('groups', {}).items()])
         await update.message.reply_text(
-            f"✅ **Add Groups Session Completed**\n\n{group_list}",
-            parse_mode='Markdown'
+            f"✅ <b>Add Groups Session Completed</b>\n\n{group_list}",
+            parse_mode='HTML'
         )
         return ConversationHandler.END
     
@@ -2452,10 +2450,10 @@ The reminder will be sent automatically at the scheduled time.
         """Finish delete groups session"""
         await self.clear_conversation(update.effective_user.id)
         groups_data = self.load_json(GROUPS_FILE)
-        group_list = "\n".join([f"• {self.escape_markdown(name)}: {self.escape_markdown(gid)}" for gid, name in groups_data.get('groups', {}).items()])
+        group_list = "\n".join([f"• {name}: <code>{gid}</code>" for gid, name in groups_data.get('groups', {}).items()])
         await update.message.reply_text(
-            f"✅ **Delete Groups Session Completed**\n\n{group_list}",
-            parse_mode='Markdown'
+            f"✅ <b>Delete Groups Session Completed</b>\n\n{group_list}",
+            parse_mode='HTML'
         )
         return ConversationHandler.END
     
