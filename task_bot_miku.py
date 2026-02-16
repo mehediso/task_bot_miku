@@ -462,7 +462,7 @@ class ReminderBot:
             response += f"✅ **Added {len(added)} group(s):**\n" + "\n".join([f"• {g}" for g in added]) + "\n\n"
         
         if already_exists:
-            response += f"⚠️ **Already registered:**\n" + "\n".join([f"• {g}" for g in already_exists]) + "\n\n"
+                        response += f"⚠️ **Already registered:**\n" + "\n".join([f"• {g}" for g in already_exists]) + "\n\n"
         
         if invalid:
             response += f"❌ **Invalid group IDs:**\n" + "\n".join([f"• {inv}" for inv in invalid]) + "\n\n"
